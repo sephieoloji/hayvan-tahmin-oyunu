@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 Hayvan Tahmin Oyunu 🎉</title>
+<style>
+body { font-family: Arial; text-align:center; background: linear-gradient(to bottom, #a8edea, #fed6e3); margin:0; padding:0; }
+h1 { color:#ff6f61; margin-top:20px; text-shadow:2px 2px #fff; }
+#isimGirisDiv { margin-top:20px; }
+#isimInput { padding:8px 12px; font-size:16px; border-radius:8px; border:1px solid #aaa; width:200px; }
+#isimBtn { padding:8px 12px; font-size:16px; border-radius:8px; background:#4db6ac; color:white; border:none; cursor:pointer; margin-left:10px; }
+#isimBtn:hover { background:#00897b; }
+#butonlar { display:flex; flex-wrap:wrap; justify-content:center; max-width:100%; overflow-y:auto; padding:10px; }
+#butonlar button { 
+  padding:12px 20px; margin:5px; font-size:16px; border-radius:12px; border:none; cursor:pointer; 
+  background:#4db6ac; color:white; box-shadow:2px 2px 5px rgba(0,0,0,0.3);
+  transition: transform 0.1s, background 0.3s; min-width:100px;
+}
+#butonlar button:hover { background:#00897b; transform:scale(1.05); }
+#mesaj { margin-top:20px; font-size:18px; min-height:60px; color:#004d40; font-weight:bold; padding:10px; border-radius:10px; background:rgba(255,255,255,0.7); display:inline-block; transition: transform 0.3s, color 0.3s; max-width:90%; }
+#ilkIpucu { font-size:20px; font-weight:bold; margin-top:20px; }
+#ipucuNot { font-size:16px; font-style:italic; color:#333; margin-top:5px; }
+#ipucuBtn { padding:12px 25px; font-size:16px; margin-top:5px; border-radius:12px; background:#ffb74d; color:white; border:none; cursor:pointer; box-shadow:2px 2px 5px rgba(0,0,0,0.3);}
+#ipucuBtn:hover { background:#ff9800; transform:scale(1.05); }
+#tekrarBtn { padding:12px 25px; font-size:16px; margin-top:10px; border-radius:12px; background:#81c784; color:white; border:none; cursor:pointer; box-shadow:2px 2px 5px rgba(0,0,0,0.3);}
+#tekrarBtn:hover { background:#4caf50; transform:scale(1.05); }
+</style>
+</head>
+<body>
+
+<h1>🐾 Hayvan Tahmin Oyunu 🎉</h1>
+
+<div id="isimGirisDiv">
+  <span>Merhaba, adını buraya yaz:</span><br><br>
+  <input type="text" id="isimInput" placeholder="Adınız">
+  <button id="isimBtn" onclick="onaylaIsim()">Onayla</button>
+</div>
+
+<p id="ilkIpucu"></p>
+<p id="ipucuNot"></p>
+<div id="butonlar"></div>
+
+<button id="ipucuBtn" onclick="verIpucu()">İpucu Al</button>
+<button id="tekrarBtn" onclick="tekrarOyna()">Tekrar Oyna</button>
+<p id="mesaj"></p>
+
+<audio id="dogruSes" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+<audio id="yanlisSes" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+<script>
+// Kullanıcı ismi
+let oyuncuIsmi = "";
+
+// Hayvanlar ve ipuçları
+let hayvanlar = {
+"kedi":["🐱","Evcil hayvandır","Miyavlar","Fare yakalar","Tüyleri yumuşaktır"],
+"köpek":["🐶","Havlar","Sadıktır","Evcil hayvandır","Top oynamayı sever"],
+"tavşan":["🐰","Havuç yer","Küçük ve hızlıdır","Tüyleri yumuşaktır","Saklanmayı sever"],
+"maymun":["🐵","Zeki hayvandır","Meyve yer","Ağaçlarda yaşar","Oyun oynamayı sever"],
+"penguen":["🐧","Uçamaz","Beyaz ve siyahdır","Soğukta yaşar","Yüzebilir"],
+"fil":["🐘","Büyüktür","Uzun hortumu vardır","Ot yer","Ailesine bağlıdır"],
+"inek":["🐄","Ot yer","Süt verir","Büyüktür","Sakin bir hayvandır"],
+"aslan":["🦁","Yırtıcıdır","Kükreyebilir","Ormanda yaşar","Güçlüdür"],
+"zebra":["🦓","Çizgili derisi vardır","Ot yer","Hızlıdır","Sosyal bir hayvandır"],
+"kaplan":["🐅","Yırtıcıdır","Güçlüdür","Ormanda yaşar","Hızlıdır"],
+"timsah":["🐊","Güçlü çenesi vardır","Yüzebilir","Büyük ve sakin","Uzun yaşar"],
+"zürafa":["🦒","Uzun boynu vardır","Yaprak yer","Uzun bacaklıdır","Sakin bir hayvandır"],
+"kartal":["🦅","Uçar","Keskin gözlere sahiptir","Avlanır","Hızlıdır"],
+"tavuk":["🐔","Yumurta yapar","Kanatlıdır","Tüyleri vardır","Sakindir"],
+"ördek":["🦆","Vak vaklar","Kanatlıdır","Yüzebilir","Suyun kenarını sever"],
+"balina":["🐋","Büyüktür","Yüzebilir","Denizleri sever","Sakin bir hayvandır"],
+"köpekbalığı":["🦈","Yırtıcıdır","Keskin dişleri vardır","Yüzebilir","Hızlıdır"],
+"tilki":["🦊","Kurnazdır","Ormanda yaşar","Hızlıdır","Küçüktür"],
+"panda":["🐼","Bambu yer","Sevimlidir","Sakin bir hayvandır","Tüyleri vardır"],
+"hipopotam":["🦛","Büyük ve güçlüdür","Suyu sever","Ot yer","Sakin bir hayvandır"],
+"sincap":["🐿️","Fındık yer","Ağaçta yaşar","Hızlıdır","Küçüktür"],
+"baykuş":["🦉","Uçar","Gece aktiftir","Sessizdir","Keskin gözlere sahiptir"],
+"fare":["🐭","Küçüktür","Hızlıdır","Peynir sever","Saklanmayı sever"],
+"koyun":["🐑","Ot yer","Yün verir","Sakin bir hayvandır","Sosyal bir hayvandır"],
+"geyik":["🦌","Ormanda yaşar","Boynuzları vardır","Hızlıdır","Sakin bir hayvandır"],
+"kaplumbağa":["🐢","Yavaştır","Kabuk taşır","Uzun yaşar","Sakindir"],
+"örümcek":["🕷️","Ağ örer","Çok bacaklıdır","Küçüktür","Yavaştır"],
+"arı":["🐝","Bal yapar","Uçar","İğnesi vardır","Küçüktür"],
+"kelebek":["🦋","Uçar","Renkli kanatları vardır","Bitkilerle beslenir","Hızlıdır"],
+"domuz":["🐖","Ot yer","Zeki","Kirli yerleri sever","Sakindir"],
+"kunduz":["🦫","Odun taşır","Baraj yapar","Su kenarını sever","Sakindir"],
+"yarasa":["🦇","Uçar","Gece aktiftir","Küçüktür","Sessizdir"],
+"kanguru":["🦘","Zıplar","Avustralya’da yaşar","Güçlü bacakları vardır","Sosyal bir hayvandır"],
+"papağan":["🦜","Konuşabilir","Renkli tüyleri vardır","Uçar","Sosyal bir hayvandır"],
+"denizatı":["🐬","Küçüktür","Renkli olabilir","Denizi sever","Sakin bir hayvandır"],
+"ahtapot":["🐙","8 kolu vardır","Mürekkep fışkırtır","Denizi sever","Zeki bir hayvandır"],
+"deniz yıldızı":["⭐","5 kolu vardır","Denizi sever","Sessizdir","Küçüktür"],
+"yengeç":["🦀","Kabuğu vardır","Yan yan yürür","Suyun kenarını sever","Küçüktür"],
+"karınca":["🐜","Çok çalışkandır","Küçüktür","Sürüler halinde yaşar","Sakindir"],
+"salyangoz":["🐌","Yavaş hareket eder","Kabuk taşır","Sakindir","Küçüktür"],
+"su samuru":["🦦","Sevimlidir","Balık yer","Yüzmeyi sever","Hızlıdır"],
+"leylek":["🦩","Uçar","Uzun bacaklıdır","Göç eder","Sakindir"],
+"lemur":["🦝","Zıplar","Madagaskar’da yaşar","Küçüktür","Sosyal bir hayvandır"],
+"at":["🐎","Koşar","Binilebilir","Büyük hayvandır","Hızlıdır"],
+"eşek":["🫏","Uzun kulaklıdır","İnatçıdır","Ot yer","Binek hayvanıdır"],
+"şempanze":["🦧","Zeki","Ağaçta yaşar","Meyve yer","Hızlıdır"],
+"güvercin":["🕊️","Uçar","Tüyleri vardır","Sakindir","Hızlıdır"],
+"kaz":["🦢","Vak vaklar","Kanatlıdır","Sakindir","Büyük hayvandır"],
+"karga":["🐦","Uçar","Zeki","Siyah tüyleri vardır","Sakindir"],
+"somon":["🐟","Yüzebilir","Lezzetlidir","Denizi sever","Hızlıdır"],
+"maymun":["🐵","Zeki","Ağaçta yaşar","Meyve yer","Hızlıdır"],
+"atmacagil":["🦅","Keskin pençelidir","Uçar","Avlanır","Hızlıdır"]
+};
+
+// Global değişkenler
+let secili, tahminSayisi, butonDiv, butonlar = [];
+
+// İsim onayla
+function onaylaIsim() {
+    let input = document.getElementById("isimInput").value.trim();
+    if(input === "") { alert("Lütfen adınızı girin!"); return; }
+    oyuncuIsmi = input;
+    document.getElementById("isimGirisDiv").style.display = "none";
+    baslat();
+}
+
+// Oyunu başlat
+function baslat(){
+    secili = Object.keys(hayvanlar)[Math.floor(Math.random()*Object.keys(hayvanlar).length)];
+    tahminSayisi = 0;
+    document.getElementById("mesaj").innerText = "";
+    document.getElementById("ilkIpucu").innerText = "💡 " + oyuncuIsmi + " için ipucu: " + hayvanlar[secili][1];
+    document.getElementById("ipucuNot").innerText = oyuncuIsmi + " aşağıdaki 'İpucu Al' tuşundan ipucu alabilirsin!";
+
+    butonDiv = document.getElementById("butonlar");
+    butonDiv.innerHTML = "";
+    butonlar = [];
+
+    Object.keys(hayvanlar).sort().forEach(function(hayvan){
+        let btn = document.createElement("button");
+        btn.innerText = hayvanlar[hayvan][0] + " " + hayvan;
+        btn.onclick = function(){ tahminEt(hayvan, btn); };
+        butonDiv.appendChild(btn);
+        butonlar.push(btn);
+    });
+}
+
+// Tahmin et
+function tahminEt(tahmin, btn){
+    let mesaj = document.getElementById("mesaj");
+    tahminSayisi++;
+
+    if(tahmin === secili){
+        mesaj.innerText = "GO GİRLL 🥳";
+        mesaj.style.color = "#00FF00";
+        const d = document.getElementById("dogruSes");
+        d.currentTime = 0;
+        d.play();
+        btn.style.background = "#2e7d32";
+        btn.style.color = "white";
+        mesaj.style.transform = "scale(1.2)";
+        butonlar.forEach(b => b.disabled = true);
+        setTimeout(()=>{mesaj.style.transform="scale(1)";},300);
+    } else {
+        const yanlisMesajlar = [
+            `Hayır ${oyuncuIsmi} cevap bu değildi zuhahah🤑`,
+            `Yine bilemedin ${oyuncuIsmi} 🤯`,
+            `ya bu da değil şapşik ${oyuncuIsmi} 😚`,
+            `Denemeye devam canim 😉`
+        ];
+        mesaj.innerText = yanlisMesajlar[Math.floor(Math.random()*yanlisMesajlar.length)];
+        mesaj.style.color = "#004d40";
+        const y = document.getElementById("yanlisSes");
+        y.currentTime = 0;
+        y.play();
+        btn.style.background = "#c62828";
+        btn.disabled = true;
+        mesaj.style.transform="scale(1.1)";
+        setTimeout(()=>{mesaj.style.transform="scale(1)";},300);
+    }
+}
+
+// İpucu ver
+function verIpucu(){
+    let mesaj = document.getElementById("mesaj");
+    let ipucIndex = Math.floor(Math.random()*3)+2; 
+    let ipucu = hayvanlar[secili][ipucIndex];
+    mesaj.innerText="💡 İpucu: "+ipucu;
+}
+
+// Tekrar oyna
+function tekrarOyna(){
+    baslat();
+}
+</script>
+</body>
+</html>
